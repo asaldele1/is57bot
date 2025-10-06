@@ -1,5 +1,6 @@
 from aiogram import Router, types
 from aiogram.filters import Command
+from aiogram.enums import ParseMode
 from utils import auth_required, auth_manager
 from api import api_client
 from config.settings import LEGAL_SYMBOLS, SUBJECTS
@@ -19,7 +20,7 @@ async def cmd_add_task(message: types.Message):
             await message.answer(
                 "❌ Использование: `/add_task <предмет> <название>`\n"
                 f"Доступные предметы: {', '.join(SUBJECTS[:5])}...",
-                parse_mode="Markdown",
+                parse_mode=ParseMode.MARKDOWN,
             )
             return
 
@@ -81,7 +82,7 @@ async def cmd_remove_task(message: types.Message):
         if len(args) < 2:
             await message.answer(
                 "❌ Использование: `/remove_task <предмет> <название>`",
-                parse_mode="Markdown",
+                parse_mode=ParseMode.MARKDOWN,
             )
             return
 
@@ -125,7 +126,7 @@ async def cmd_set_result(message: types.Message):
         if len(args) < 4:
             await message.answer(
                 "❌ Использование: `/set_result <команда> <предмет> <задание> <баллы>`",
-                parse_mode="Markdown",
+                parse_mode=ParseMode.MARKDOWN,
             )
             return
 
@@ -144,8 +145,9 @@ async def cmd_set_result(message: types.Message):
         # Если точного совпадения нет — попробуем найти по префиксу (началу названия), нечувствительно к регистру
         if not team:
             lc = team_name.lower()
-            prefix_matches = [t for t in teams if t.get(
-                "name", "").lower().startswith(lc)]
+            prefix_matches = [
+                t for t in teams if t.get("name", "").lower().startswith(lc)
+            ]
             if len(prefix_matches) == 1:
                 team = prefix_matches[0]
                 team_name = team.get("name")

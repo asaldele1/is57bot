@@ -1,5 +1,6 @@
 from aiogram import Router, types
 from aiogram.filters import Command
+from aiogram.enums import ParseMode
 from utils import auth_required, auth_manager
 from api import api_client
 from config.settings import LEGAL_SYMBOLS, BUILDINGS
@@ -63,7 +64,7 @@ async def cmd_remove_user(message: types.Message):
         if not args:
             await message.answer(
                 "❌ Укажите ID пользователя: `/remove_user <user_id>`",
-                parse_mode="Markdown",
+                parse_mode=ParseMode.MARKDOWN,
             )
             return
 
@@ -136,7 +137,7 @@ async def cmd_status(message: types.Message):
 **Администратор:** {message.from_user.id}
 """
 
-        await message.answer(status_text, parse_mode="Markdown")
+        await message.answer(status_text, parse_mode=ParseMode.MARKDOWN)
 
     except Exception as e:
         await message.answer(f"❌ Ошибка при получении статуса: {e}")
@@ -152,7 +153,7 @@ async def cmd_add_team(message: types.Message):
             await message.answer(
                 "❌ Использование: `/add_team <здание> <название>`\n"
                 f"Доступные здания: {', '.join(map(str, BUILDINGS))}",
-                parse_mode="Markdown",
+                parse_mode=ParseMode.MARKDOWN,
             )
             return
 
@@ -216,7 +217,7 @@ async def cmd_remove_team(message: types.Message):
         if len(args) < 1:
             await message.answer(
                 "❌ Использование: `/remove_team <название>`",
-                parse_mode="Markdown",
+                parse_mode=ParseMode.MARKDOWN,
             )
             return
 

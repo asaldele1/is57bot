@@ -44,7 +44,7 @@ async def cmd_add_task(message: types.Message):
         # Проверка на дубликаты
         tasks = await api_client.get_tasks()
         for task in tasks:
-            if task["name"] == name:
+            if task["name"] == name and task["subject"] == subject:
                 await message.answer(
                     "❌ Задание с таким названием уже существует."
                 )

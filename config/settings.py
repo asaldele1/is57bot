@@ -20,6 +20,7 @@ DATA_DIR = "data"
 ALLOWED_USERS_FILE = os.path.join(DATA_DIR, "allowed_users.txt")
 ALLOWED_GROUPS_FILE = os.path.join(DATA_DIR, "allowed_groups.txt")
 API_TOKEN_FILE = os.path.join(DATA_DIR, "api_token.txt")
+SELECTED_TASKS_FILE = os.path.join(DATA_DIR, "selected_tasks.json")
 
 # IS57 API Data
 SUBJECTS = [

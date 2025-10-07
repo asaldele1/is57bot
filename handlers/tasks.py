@@ -5,6 +5,7 @@ from utils import auth_required, auth_manager
 from api import api_client
 from config.settings import LEGAL_SYMBOLS, SUBJECTS
 from utils.helpers import validate_name
+from utils.selection import selection_manager
 import shlex
 
 router = Router()
@@ -29,9 +30,7 @@ async def cmd_add_task(message: types.Message):
 
         # Проверка предмета
         if subject not in SUBJECTS:
-            await message.answer(
-                "❌ Неверный предмет. Используйте /subjects для просмотра списка."
-            )
+            await message.answer("❌ Неверный предмет. Используйте /subjects.")
             return
 
         # Проверка имени
@@ -117,23 +116,100 @@ async def cmd_remove_task(message: types.Message):
         await message.answer(f"❌ Ошибка при удалении задания: {e}")
 
 
+@router.message(Command("choose_task"))
+@auth_required()
+async def cmd_choose_task(message: types.Message):
+    """Выбрать задание для последующего использования в /set_result"""
+    try:
+        args = shlex.split(message.text)[1:]
+        if len(args) < 2:
+            await message.answer(
+                "❌ Использование: `/choose_task <предмет> <название>`",
+                parse_mode=ParseMode.MARKDOWN,
+            )
+            return
+
+        subject = args[0].lower()
+        name = args[1].strip()
+
+        tasks = await api_client.get_tasks()
+        task = api_client.find_task_by_name_and_subject(tasks, name, subject)
+
+        if not task:
+            await message.answer("❌ Задание не найдено.")
+            return
+
+        selection_manager.set_selection(message.from_user.id, task)
+        await message.answer(
+            "✅ Вы выбрали задание: "
+            f"{task['name']} ({task['subject']}). "
+            "Теперь можно использовать `/set_result <команда> <баллы>`"
+        )
+
+    except Exception as e:
+        await message.answer(f"❌ Ошибка при выборе задания: {e}")
+
+
+@router.message(Command("clear_choice"))
+@auth_required()
+async def cmd_clear_choice(message: types.Message):
+    """Очистить выбранное задание пользователя"""
+    try:
+        selection_manager.clear_selection(message.from_user.id)
+        await message.answer("✅ Выбор задания очищен.")
+    except Exception as e:
+        await message.answer(f"❌ Ошибка при очистке выбора: {e}")
+
+
+@router.message(Command("s"))
 @router.message(Command("set_result"))
 @auth_required()
 async def cmd_set_result(message: types.Message):
     """Установка результата команды"""
     try:
         args = shlex.split(message.text)[1:]
-        if len(args) < 4:
+        # expected usages:
+        # /set_result <team> <subject> <task> <points>
+        # /set_result <team> <points>  (uses user's selected task)
+        if len(args) < 2:
             await message.answer(
-                "❌ Использование: `/set_result <команда> <предмет> <задание> <баллы>`",
+                "❌ Использование: `/set_result <команда> <предмет> <задание> "
+                "<баллы>`\n"
+                "или: `/set_result <команда> <баллы>` если вы ранее выбрали "
+                "задание через /choose_task",
                 parse_mode=ParseMode.MARKDOWN,
             )
             return
 
         team_name = args[0].strip()
-        subject = args[1].lower()
-        task_name = args[2].strip()
-        points = int(args[3])
+
+        # Если передано только 2 аргумента — предполагаем, что второй это баллы
+        if len(args) == 2:
+            # попробуем получить выбранное задание пользователя
+            sel = selection_manager.get_selection(message.from_user.id)
+            if not sel:
+                await message.answer(
+                    "❌ Вы не указали предмет/задание и не выбрали задание."
+                    " Используйте: `/set_result <команда> <предмет> <задание>`"
+                    " или выберите задание через /choose_task"
+                )
+                return
+
+            subject = sel.get("subject")
+            task_name = sel.get("name")
+            try:
+                points = int(args[1])
+            except ValueError:
+                await message.answer("❌ Баллы должны быть числами.")
+                return
+        else:
+            subject = args[1].lower()
+            task_name = args[2].strip()
+            try:
+                points = int(args[3])
+            except (IndexError, ValueError):
+                await message.answer("❌ Баллы должны быть числами.")
+                return
 
         # Получение данных
         teams = await api_client.get_teams()
@@ -142,7 +218,8 @@ async def cmd_set_result(message: types.Message):
         # Поиск команды и задания
         team = api_client.find_team_by_name(teams, team_name)
 
-        # Если точного совпадения нет — попробуем найти по префиксу (началу названия), нечувствительно к регистру
+        # Если точного совпадения нет — попробуем найти по префиксу
+        # (началу названия), нечувствительно к регистру
         if not team:
             lc = team_name.lower()
             prefix_matches = [
@@ -155,12 +232,18 @@ async def cmd_set_result(message: types.Message):
                 # Если несколько совпадений — попросим уточнить
                 names = ", ".join(t.get("name") for t in prefix_matches[:10])
                 await message.answer(
-                    f"❌ Найдено несколько команд, начинающихся на '{team_name}': {names}. Пожалуйста, уточните название."
+                    "❌ Найдено несколько команд, начинающихся на '"
+                    f"{team_name}': {names}. Пожалуйста, уточните название."
                 )
                 return
         task = api_client.find_task_by_name_and_subject(
             tasks, task_name, subject
         )
+
+        # Если задание не найдено — сообщим об этом
+        if not task:
+            await message.answer("❌ Задание не найдено.")
+            return
 
         if not team:
             await message.answer("❌ Команда не найдена.")

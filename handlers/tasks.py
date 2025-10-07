@@ -125,7 +125,7 @@ async def cmd_choose_task(message: types.Message):
         if len(args) < 2:
             await message.answer(
                 "❌ Использование: `/choose\\_task <предмет> <название>`",
-                parse_mode=ParseMode.MARKDOWN,
+                parse_mode=ParseMode.MARKDOWN
             )
             return
 
@@ -143,7 +143,8 @@ async def cmd_choose_task(message: types.Message):
         await message.answer(
             "✅ Вы выбрали задание: "
             f"{task['name']} ({task['subject']}). "
-            "Теперь можно использовать `/set\\_result <команда> <баллы>`"
+            "Теперь можно использовать `/set\\_result <команда> <баллы>`",
+            parse_mode=ParseMode.MARKDOWN
         )
 
     except Exception as e:

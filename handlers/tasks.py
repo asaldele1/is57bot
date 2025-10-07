@@ -124,7 +124,7 @@ async def cmd_choose_task(message: types.Message):
         args = shlex.split(message.text)[1:]
         if len(args) < 2:
             await message.answer(
-                "❌ Использование: `/choose_task <предмет> <название>`",
+                "❌ Использование: `/choose\\_task <предмет> <название>`",
                 parse_mode=ParseMode.MARKDOWN,
             )
             return
@@ -143,7 +143,7 @@ async def cmd_choose_task(message: types.Message):
         await message.answer(
             "✅ Вы выбрали задание: "
             f"{task['name']} ({task['subject']}). "
-            "Теперь можно использовать `/set_result <команда> <баллы>`"
+            "Теперь можно использовать `/set\\_result <команда> <баллы>`"
         )
 
     except Exception as e:
@@ -173,9 +173,9 @@ async def cmd_set_result(message: types.Message):
         # /set_result <team> <points>  (uses user's selected task)
         if len(args) < 2:
             await message.answer(
-                "❌ Использование: `/set_result <команда> <предмет> <задание> "
+                "❌ Использование: `/set\\_result <команда> <предмет> <задание> "
                 "<баллы>`\n"
-                "или: `/set_result <команда> <баллы>` если вы ранее выбрали "
+                "или: `/set\\_result <команда> <баллы>` если вы ранее выбрали "
                 "задание через /choose_task",
                 parse_mode=ParseMode.MARKDOWN,
             )
@@ -190,8 +190,9 @@ async def cmd_set_result(message: types.Message):
             if not sel:
                 await message.answer(
                     "❌ Вы не указали предмет/задание и не выбрали задание."
-                    " Используйте: `/set_result <команда> <предмет> <задание>`"
-                    " или выберите задание через /choose_task"
+                    " Используйте: `/set\\_result <команда> <предмет> <задание>`"
+                    " или выберите задание через /choose_task",
+                    parse_mode=ParseMode.MARKDOWN,
                 )
                 return
 

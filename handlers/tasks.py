@@ -177,7 +177,7 @@ async def cmd_set_result(message: types.Message):
                 "❌ Использование: `/set_result <команда> <предмет> <задание> "
                 "<баллы>`\n"
                 "или: `/set_result <команда> <баллы>` если вы ранее выбрали "
-                "задание через /choose_task",
+                "задание через /choose\_task",
                 parse_mode=ParseMode.MARKDOWN,
             )
             return
